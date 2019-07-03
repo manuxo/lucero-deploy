@@ -1,0 +1,22 @@
+{
+    "dev":{
+        "WEBSITE_SOURCE_PATH": "Deploy/des/web",
+        "WEBSITE_DEST_PATH": "Publish/des/web",
+        "WEBSITE_BACKUP_PATH": "Publish/des/backups/web",
+        "SERVICES_SOURCE_PATH": "Deploy/des/services",
+        "SERVICES_DEST_PATH": "Publish/des/services",
+        "SERVICES_BACKUP_PATH": "Publish/des/backups/services"
+    },
+    "test":{
+        "WEBSITE_SOURCE_PATH": "",
+        "WEBSITE_DEST_PATH": "",
+        "SERVICES_SOURCE_PATH": "",
+        "SERVICES_DEST_PATH": ""
+    },
+    "prod":{
+        "WEBSITE_SOURCE_PATH": "",
+        "WEBSITE_DEST_PATH": "",
+        "SERVICES_SOURCE_PATH": "",
+        "SERVICES_DEST_PATH": ""
+    }
+}
