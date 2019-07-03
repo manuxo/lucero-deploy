@@ -18,6 +18,7 @@ const (
 	COPY_WEBSITE  CopyOption = 1
 	COPY_SERVICES CopyOption = 2
 	COPY_BOTH     CopyOption = 3
+	COPY_BACKUP   CopyOption = 4
 	DEV_ENV       EnvOption  = 1
 	TEST_ENV      EnvOption  = 2
 	PROD_ENV      EnvOption  = 3
@@ -51,7 +52,7 @@ func ReadConfig() {
 	json.Unmarshal(byteValue, &config)
 }
 
-func Deploy(deployConfig DeployConfig, copyOption CopyOption,chRead chan<- bool) {
+func Deploy(deployConfig DeployConfig, copyOption CopyOption, chRead chan<- bool) {
 	currentDate := time.Now()
 	minute := currentDate.Minute()
 	hour := currentDate.Hour()
@@ -69,8 +70,11 @@ func Deploy(deployConfig DeployConfig, copyOption CopyOption,chRead chan<- bool)
 		_ = copy.Copy(deployConfig.ServicesDestPath, servicesBackupPath)
 		_ = copy.Copy(deployConfig.WebSiteSourcePath, deployConfig.WebSiteDestPath)
 		_ = copy.Copy(deployConfig.ServicesSourcePath, deployConfig.ServicesDestPath)
+	} else if copyOption == COPY_BACKUP {
+		_ = copy.Copy(deployConfig.WebSiteDestPath, webBackupPath)
+		_ = copy.Copy(deployConfig.ServicesDestPath, servicesBackupPath)
 	}
-	chRead<-true
+	chRead <- true
 }
 
 func main() {
@@ -80,25 +84,25 @@ func main() {
 		var envOption EnvOption
 		var copyOption CopyOption
 		fmt.Println("--- Lucero Deploy ---")
-		fmt.Print("Ingrese opción: [Desarrollo: 1, Testing: 2, Produccion: 3, Todos: 4, Salir: 0]: ")
+		fmt.Print("Ingrese Entorno [(1)Desarrollo (2)Testing (3)Producción, (4)Todos (0)Salir]: ")
 		fmt.Scanf("%d\n", &envOption)
 		if envOption == 0 {
 			fmt.Println("--- --- --- ---")
 			break
 		}
-		fmt.Print("Ingrese opción de copiado: [Web: 1, Servicios: 2, Ambos: 3]: ")
+		fmt.Print("Ingrese opción de despliegue [(1)Desplegar Web (2)Desplegar Servicios (3)Desplegar Ambos (4)Realizar Backup]: ")
 		fmt.Scanf("%d\n", &copyOption)
 		fmt.Println("Copiando archivos...")
 		if envOption == DEV_ENV {
-			go Deploy(config.Dev, copyOption,chRead)
+			go Deploy(config.Dev, copyOption, chRead)
 		} else if envOption == TEST_ENV {
-			go Deploy(config.Testing, copyOption,chRead)
+			go Deploy(config.Testing, copyOption, chRead)
 		} else if envOption == PROD_ENV {
-			go Deploy(config.Prod, copyOption,chRead)
+			go Deploy(config.Prod, copyOption, chRead)
 		} else if envOption == ALL_ENV {
-			go Deploy(config.Dev, copyOption,chRead)
-			go Deploy(config.Testing, copyOption,chRead)
-			go Deploy(config.Prod, copyOption,chRead)
+			go Deploy(config.Dev, copyOption, chRead)
+			go Deploy(config.Testing, copyOption, chRead)
+			go Deploy(config.Prod, copyOption, chRead)
 		}
 		<-chRead
 		fmt.Println("Se han copiado los archivos satisfactoriamente!!!")
