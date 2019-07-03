@@ -51,12 +51,12 @@ func ReadConfig() {
 	json.Unmarshal(byteValue, &config)
 }
 
-func Deploy(deployConfig DeployConfig, copyOption CopyOption) {
+func Deploy(deployConfig DeployConfig, copyOption CopyOption,chRead chan<- bool) {
 	currentDate := time.Now()
 	minute := currentDate.Minute()
 	hour := currentDate.Hour()
 	strDate := currentDate.Format("02-01-2006")
-	webBackupPath := fmt.Sprintf("%s/%s-%d%d", deployConfig.WebSiteBackupPath, strDate, hour, minute)
+	webBackupPath := fmt.Sprintf("%s/%s-%dhrs%dmin", deployConfig.WebSiteBackupPath, strDate, hour, minute)
 	servicesBackupPath := fmt.Sprintf("%s/%s-%dhrs%dmin", deployConfig.ServicesBackupPath, strDate, hour, minute)
 	if copyOption == COPY_WEBSITE {
 		_ = copy.Copy(deployConfig.WebSiteDestPath, webBackupPath)
@@ -70,9 +70,11 @@ func Deploy(deployConfig DeployConfig, copyOption CopyOption) {
 		_ = copy.Copy(deployConfig.WebSiteSourcePath, deployConfig.WebSiteDestPath)
 		_ = copy.Copy(deployConfig.ServicesSourcePath, deployConfig.ServicesDestPath)
 	}
+	chRead<-true
 }
 
 func main() {
+	chRead := make(chan bool)
 	for {
 		ReadConfig()
 		var envOption EnvOption
@@ -88,16 +90,17 @@ func main() {
 		fmt.Scanf("%d\n", &copyOption)
 		fmt.Println("Copiando archivos...")
 		if envOption == DEV_ENV {
-			Deploy(config.Dev, copyOption)
+			go Deploy(config.Dev, copyOption,chRead)
 		} else if envOption == TEST_ENV {
-			Deploy(config.Testing, copyOption)
+			go Deploy(config.Testing, copyOption,chRead)
 		} else if envOption == PROD_ENV {
-			Deploy(config.Prod, copyOption)
+			go Deploy(config.Prod, copyOption,chRead)
 		} else if envOption == ALL_ENV {
-			Deploy(config.Dev, copyOption)
-			Deploy(config.Testing, copyOption)
-			Deploy(config.Prod, copyOption)
+			go Deploy(config.Dev, copyOption,chRead)
+			go Deploy(config.Testing, copyOption,chRead)
+			go Deploy(config.Prod, copyOption,chRead)
 		}
+		<-chRead
 		fmt.Println("Se han copiado los archivos satisfactoriamente!!!")
 	}
 }
